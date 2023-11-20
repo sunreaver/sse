@@ -19,9 +19,9 @@ type EnginesResInterface interface {
 
 // 处理SSE数据流. 处理完毕后, 关闭streamData.
 // output: 输出的结构体.
-// onData: 数据处理中的, 回调函数. 其参数会完全和output的结构体一致.
+// onData: 数据处理中的, 回调函数. 其参数会完全和output的结构体一致. 如果onData返回错误, 则会中断处理.
 // 此方法协程安全.
-func StreamOnData(streamData io.ReadCloser, output EnginesResInterface, onData func(any)) (err error) {
+func StreamOnData(streamData io.ReadCloser, output EnginesResInterface, onData func(any) error) (err error) {
 	defer func() {
 		e := recover()
 		if e != nil {
@@ -62,8 +62,8 @@ LOOP:
 			return errors.Errorf("invalid json stream data: %v", err)
 		}
 
-		if onData != nil {
-			onData(output)
+		if err := onData(output); err != nil {
+			return errors.Wrap(err, "onData")
 		}
 	}
 	return io.EOF
