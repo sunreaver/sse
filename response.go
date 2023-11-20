@@ -1,4 +1,4 @@
-package util
+package sse
 
 import (
 	"bytes"
@@ -16,7 +16,10 @@ type EnginesResInterface interface {
 	Reset()
 }
 
-func StreamOnData(streamData io.ReadCloser, output EnginesResInterface, onData func(EnginesResInterface)) error {
+// 处理SSE数据流. 处理完毕后, 关闭streamData.
+// output: 输出的结构体.
+// onData: 数据处理中的, 回调函数. 其参数会完全和output的结构体一致.
+func StreamOnData(streamData io.ReadCloser, output EnginesResInterface, onData func(any)) error {
 	reader := newEventStreamReader(streamData, 1<<16)
 	defer streamData.Close()
 
