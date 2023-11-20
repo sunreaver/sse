@@ -3,6 +3,7 @@ package sse
 import (
 	"bytes"
 	"io"
+	"runtime"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -19,7 +20,19 @@ type EnginesResInterface interface {
 // 处理SSE数据流. 处理完毕后, 关闭streamData.
 // output: 输出的结构体.
 // onData: 数据处理中的, 回调函数. 其参数会完全和output的结构体一致.
-func StreamOnData(streamData io.ReadCloser, output EnginesResInterface, onData func(any)) error {
+// 此方法协程安全.
+func StreamOnData(streamData io.ReadCloser, output EnginesResInterface, onData func(any)) (err error) {
+	defer func() {
+		e := recover()
+		if e != nil {
+			stack := make([]byte, 1024)
+			n := runtime.Stack(stack, false)
+			if n > 0 {
+				stack = stack[:n]
+			}
+			err = errors.Errorf("panic: %v\n%s", e, stack)
+		}
+	}()
 	reader := newEventStreamReader(streamData, 1<<16)
 	defer streamData.Close()
 
