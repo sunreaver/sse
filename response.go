@@ -66,5 +66,5 @@ LOOP:
 			return errors.Wrap(err, "onData")
 		}
 	}
-	return io.EOF
+	return nil
 }
